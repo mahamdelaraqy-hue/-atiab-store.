@@ -97,6 +97,11 @@ router.post('/', upload.single('transaction_image'), async (req, res) => {
         // Create Order
         const order = new Order({
             customer_id: customer._id,
+            customer_name: customer_name,
+            product_name: finalizedItems.length === 1 
+                ? (await Product.findById(finalizedItems[0].product_id))?.name || 'منتج'
+                : `${finalizedItems.length} منتجات`,
+            quantity: finalizedItems.length === 1 ? finalizedItems[0].quantity : finalizedItems.reduce((s, i) => s + i.quantity, 0),
             items: finalizedItems,
             total_price,
             total_cost,
