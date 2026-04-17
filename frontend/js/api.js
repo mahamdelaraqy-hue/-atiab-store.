@@ -29,7 +29,22 @@ const api = {
             headers
         };
 
-        const response = await fetch(`${BASE_URL}${endpoint}`, config);
+        // Timeout: 15 seconds to prevent buttons from hanging forever
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        let response;
+        try {
+            response = await fetch(`${BASE_URL}${endpoint}`, { ...config, signal: controller.signal });
+        } catch (err) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                throw new Error('انتهت مهلة الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
+            }
+            throw err;
+        }
+        clearTimeout(timeoutId);
+
         const data = await response.json();
 
         if (!response.ok) {
