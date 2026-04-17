@@ -66,6 +66,12 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Global Error Handler for JSON responses
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'عذراً، حدث خطأ في الخادم: ' + err.message });
+});
+
 // Export the app for Vercel
 module.exports = app;
 
