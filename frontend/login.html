@@ -87,9 +87,13 @@
 
             try {
                 await api.login(un, pw);
-                window.location.href = 'index.html'; // Or dashboard if preferred, but index to show new options makes sense
+                window.location.href = 'dashboard.html';
             } catch (err) {
-                alert(err.message);
+                let msg = err.message;
+                if (msg.includes('مهلة') || msg.includes('timed out') || msg.includes('AbortError')) {
+                    msg = 'تعذر الاتصال بالخادم. الخادم يستيقظ، يرجى المحاولة مرة أخرى خلال 10 ثوانٍ.';
+                }
+                alert(msg);
                 btn.disabled = false;
                 btn.textContent = 'دخول';
             }

@@ -103,8 +103,8 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             const currentUser = api.getCurrentUser();
-            if (!currentUser || currentUser.role !== 'admin') {
-                alert('عذراً، يجب عليك تسجيل الدخول كمسؤول للوصول إلى هذه الصفحة');
+            if (!currentUser) {
+                alert('عذراً، يجب عليك تسجيل الدخول للوصول إلى هذه الصفحة');
                 window.location.href = 'login.html';
                 return;
             }
