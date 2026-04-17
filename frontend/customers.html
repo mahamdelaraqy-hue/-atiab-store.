@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العملاء - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 40px; object-fit: contain;">
+                أطياب<span>.</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">لوحة التحكم</a></li>
+                <li><a href="customers.html" class="active">العملاء</a></li>
+                <li><a href="categories.html">الأقسام</a></li>
+                <li><a href="add_product.html">إضافة منتج</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="admin-card">
+            <h2>سجل العملاء</h2>
+            <div style="overflow-x: auto;">
+                <table id="customers-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الهاتف</th>
+                            <th>عدد الطلبات</th>
+                            <th>إجمالي المدفوعات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentUser = api.getCurrentUser();
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert('عذراً، يجب عليك تسجيل الدخول كمسؤول للوصول إلى هذه الصفحة');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const tbody = document.querySelector('#customers-table tbody');
+            try {
+                const customers = await api.getCustomers();
+                tbody.innerHTML = '';
+                if(customers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا يوجد عملاء بعد.</td></tr>';
+                    return;
+                }
+                
+                customers.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${c.name}</td>
+                        <td dir="ltr" style="text-align: right;">${c.phone}</td>
+                        <td>${c.orderCount}</td>
+                        <td style="font-weight:bold; color:var(--primary-color);">${c.totalSpent} ج.م</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">خطأ في تحميل البيانات</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>

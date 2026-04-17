@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب بائع - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--bg-main), #EAEAEA);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .login-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            border-top: 5px solid var(--gold-main);
+            text-align: center;
+        }
+        .login-card h2 {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+            font-family: 'Amiri', serif;
+        }
+        .login-card .logo {
+            font-size: 3rem;
+            color: var(--primary-dark);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        .login-card .logo span {
+            color: var(--gold-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <a href="index.html" class="logo">
+            <img src="img/logo.png" alt="أطياب" style="width: 100px; height: 100px; object-fit: contain; display: block; margin: 0 auto 1.5rem;">
+            <span>أطياب</span>
+        </a>
+        <h2>انضم إلينا كبائع</h2>
+        
+        <form id="register-form">
+            <div class="form-group" style="text-align: right;">
+                <label>الاسم الكامل / اسم المحل</label>
+                <input type="text" id="reg-name" placeholder="مثال: أحمد ستور" required autofocus>
+            </div>
+
+            <div class="form-group" style="text-align: right;">
+                <label>اسم المستخدم (للدخول)</label>
+                <input type="text" id="reg-username" placeholder="مثال: ahmed_123" required>
+            </div>
+            
+            <div class="form-group" style="text-align: right;">
+                <label>رقم الواتساب (للتواصل مع العملاء)</label>
+                <input type="tel" id="reg-whatsapp" placeholder="2010XXXXXXXX" required>
+            </div>
+            
+            <div class="form-group" style="text-align: right;">
+                <label>كلمة المرور</label>
+                <input type="password" id="reg-password" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;" id="reg-btn">إنشاء الحساب الآن</button>
+        </form>
+
+        <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.9rem;">لديك حساب بالفعل؟ <a href="login.html" style="color: var(--gold-dark); text-decoration: none; font-weight: bold;">سجل دخول من هنا</a></p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // التحقق إذا كان مسجلاً بالفعل
+        if (api.getCurrentUser()) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const username = document.getElementById('reg-username').value;
+            const whatsapp = document.getElementById('reg-whatsapp').value;
+            const password = document.getElementById('reg-password').value;
+            const btn = document.getElementById('reg-btn');
+            
+            btn.disabled = true;
+            btn.textContent = 'جاري المعالجة...';
+
+            try {
+                await api.register({ name, username, whatsapp, password });
+                alert('تهانينا! تم إنشاء حسابك بنجاح. يمكنك الآن البدء بإضافة منتجاتك.');
+                window.location.href = 'index.html'; 
+            } catch (err) {
+                alert(err.message);
+                btn.disabled = false;
+                btn.textContent = 'إنشاء الحساب الآن';
+            }
+        });
+    </script>
+</body>
+</html>

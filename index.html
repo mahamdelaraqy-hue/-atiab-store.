@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أطياب - متجر العطور الفاخرة</title>
+    <!-- Premium Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 60px; object-fit: contain;">
+                <span>أطياب</span>
+            </a>
+            <ul class="nav-links" id="main-nav-links">
+                <li><a href="index.html" class="active">الرئيسية</a></li>
+                <li id="nav-login-link"><a href="login.html">تسجيل الدخول</a></li>
+                <li id="nav-add-product-link" style="display:none;"><a href="add_product.html">إضافة منتج</a></li>
+                <li id="nav-dashboard-link" style="display:none;"><a href="dashboard.html">لوحة التحكم</a></li>
+                <li id="nav-visitors-link" style="display:none;"><a href="visitors.html">الزوار</a></li>
+                <li id="nav-logout-link" style="display:none;"><a href="#" onclick="logoutUser(event)">تسجيل خروج</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>جوهر الأناقة والجاذبية</h1>
+        <p>مجموعة فخمة منتقاة بعناية من العطور النادرة والزيوت العطرية النقية التي تعكس سموك وتفردك.</p>
+    </section>
+
+    <!-- Floating Cart Button -->
+    <div id="cart-floating-btn" class="cart-toggle">
+        <svg viewBox="0 0 24 24">
+            <path
+                d="M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.11,18 17,18M7,18C5.89,18 5,18.89 5,20A2,2 0 0,0 7,22A2,2 0 0,0 9,20C9,18.89 8.11,18 7,18M7.27,18L5.7,14.54L4.75,12.54V12.5H18.27L20.27,5.5H6.27L5.3,3.5H2V5.5H4.27L7.27,18M7,11H17V13H7V11M7,7H19V9H7V7Z" />
+        </svg>
+        <span id="cart-count-badge">0</span>
+    </div>
+
+    <!-- Cart Drawer (Sidebar) -->
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="cart-drawer-header">
+            <h3>سلة المشتريات</h3>
+            <span id="close-cart-drawer">&times;</span>
+        </div>
+        <div id="cart-items-container" class="cart-items-body">
+            <!-- Cart items will be here -->
+            <p style="text-align:center; padding: 2rem; color: #777;">السلة فارغة حالياً...</p>
+        </div>
+        <div class="cart-drawer-footer">
+            <div class="cart-total">
+                <span>الإجمالي الكلي:</span>
+                <span id="cart-total-price">0 ج.م</span>
+            </div>
+            <button id="go-to-checkout" class="btn" style="width:100%" disabled>إتمام الطلب الآن</button>
+            <button id="clear-cart-btn" class="btn-outline" style="width:100%; margin-top:0.5rem; font-size:0.8rem;">مسح
+                السلة</button>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- Controls: Search & Category Filter -->
+        <div class="controls-bar">
+            <div class="filters" id="category-filters">
+                <button class="active" data-cat="">جميع التشكيلات</button>
+                <button data-cat="عطور">عطور ملكية</button>
+                <button data-cat="زيوت">زيوت نادرة</button>
+                <button data-cat="إكسسوارات">إكسسوارات</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="ابحث عن العطر المنشود...">
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="product-grid" id="product-container">
+            <!-- Products will be rendered here via JS -->
+            <div style="text-align: center; width: 100%; font-family:'Amiri'; font-size:2rem; color:var(--gold-main);">
+                جاري استحضار العطور...</div>
+        </div>
+    </main>
+
+    <!-- Hidden file input for changing product image -->
+    <input type="file" id="hidden-image-upload" accept="image/*" style="display: none;">
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkout-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-checkout">&times;</span>
+            <h2 style="margin-bottom: 2rem; color: var(--primary-dark); font-size:2rem;">إتمام الشراء</h2>
+            <form id="checkout-form">
+                <input type="hidden" id="checkout-product-id">
+
+                <div class="form-group">
+                    <label>الاسم الكريم</label>
+                    <input type="text" id="customer-name" placeholder="أدخل اسمك" required>
+                </div>
+
+                <div class="form-group">
+                    <label>رقم التواصل</label>
+                    <input type="tel" id="customer-phone" placeholder="05XXXXXXXX" required>
+                </div>
+
+                <div class="form-group">
+                    <label>عنوان التوصيل</label>
+                    <textarea id="customer-address" rows="2" placeholder="المدينة، الحي العناوين التفصيلية"
+                        required></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: -1rem; margin-bottom: 2rem;">
+                    <button type="button" id="toggle-map-btn" class="btn-outline" style="width: 100%; font-size: 0.9rem; padding: 0.6rem;">
+                        📍 تحديد الموقع بدقة على الخريطة (اختياري)
+                    </button>
+                    <div id="map-selection-container" style="display: none; margin-top: 1rem;">
+                        <p style="font-size: 0.8rem; color: var(--gold-dark); margin-bottom: 0.5rem;">حرك الدبوس لتحديد موقع التوصيل بدقة:</p>
+                        <div id="delivery-map" style="height: 250px; border-radius: 8px; border: 2px solid var(--gold-main);"></div>
+                        <input type="hidden" id="latitude">
+                        <input type="hidden" id="longitude">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>الكمية المطلوبة</label>
+                    <input type="number" id="order-quantity" min="1" value="1" required>
+                </div>
+
+                <!-- Payment Methods Section -->
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label style="font-size: 1.2rem; color: var(--primary-dark);">طريقة الدفع</label>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="vodafone" checked
+                                onchange="togglePaymentFields()">
+                            فودافون كاش
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="instapay" onchange="togglePaymentFields()">
+                            إنستا باي
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="paypal" onchange="togglePaymentFields()">
+                            PayPal (مباشر)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Manual Payment Details (Vodafone/InstaPay) -->
+                <div id="manual-payment-info"
+                    style="display: block; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #ddd;">
+                    <h4 id="payment-instruction-title" style="margin-bottom:0.5rem; color:var(--gold-dark);">تحويل
+                        فودافون كاش</h4>
+                    <p style="font-size:0.9rem; margin-bottom:1rem;" id="payment-instruction-text">يرجى تحويل المبلغ إلى
+                        الرقم: <strong>010XXXXXXXX</strong><br>الاسم: <strong>أطياب للعطور</strong></p>
+
+                    <div class="form-group">
+                        <label>رقم الموبايل / الحساب المحول منه</label>
+                        <input type="text" id="sender-phone" placeholder="أدخل الرقم للتأكيد">
+                    </div>
+
+                    <div class="form-group">
+                        <label>صورة التحويل (إيصال/سكرين شوت)</label>
+                        <input type="file" id="transaction-image" accept="image/*">
+                    </div>
+                </div>
+
+                <!-- PayPal Info -->
+                <div id="paypal-payment-info"
+                    style="display: none; background: #e3f2fd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #90caf9; text-align:center;">
+                    <p style="color:#1565c0; font-weight:bold;">سيتم إعادة توجيهك إلى شاشة الدفع الآمنة (PayPal) بعد
+                        تأكيد الطلب.</p>
+                </div>
+
+                <div
+                    style="margin-top: 2rem; margin-bottom: 1.5rem; font-size: 1.4rem; font-weight: 700; color:var(--primary-dark); border-top: 1px solid #EEE; padding-top: 1rem;">
+                    الإجمالي: <span id="checkout-total-price"
+                        style="color:var(--gold-dark); font-size: 1.8rem;">0</span> <span
+                        style="font-size:1rem; color:var(--text-muted)">ج.م</span>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%;" id="submit-order-btn">تأكيد الطلب الآن</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <!-- Chatbot Widget -->
+    <div id="chat-widget-launcher">
+        <svg viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m0 14H5.17L4 17.17V4h16v12Z" />
+        </svg>
+    </div>
+
+    <div id="chat-widget-container">
+        <div class="chat-header">
+            <div class="bot-avatar">
+                <svg style="width:25px;height:25px;fill:white" viewBox="0 0 24 24">
+                    <path
+                        d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2m0 2a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8m0 2a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6 6 6 0 0 1 6-6m-3.5 4a1.5 1.5 0 0 0 0 3 1.5 1.5 0 0 0 0-3m7 0a1.5 1.5 0 0 0 0 3 1.5 1.5 0 0 0 0-3M12 14c-1.9 0-3.5 1-4.3 2.5h8.6c-.8-1.5-2.4-2.5-4.3-2.5Z" />
+                </svg>
+            </div>
+            <div class="bot-info">
+                <h3>مساعد أطياب الذكي</h3>
+                <p>متصل الآن - كيف أساعدك؟</p>
+            </div>
+        </div>
+        <div id="chat-messages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="اكتب سؤالك هنا...">
+            <button id="send-msg-btn">
+                <svg style="width:20px;height:20px;fill:white;transform:scaleX(-1)" viewBox="0 0 24 24">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="css/chat.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/cart.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+
+</html>

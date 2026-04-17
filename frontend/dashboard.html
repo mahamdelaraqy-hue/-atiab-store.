@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأرباح والخسائر - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 40px; object-fit: contain;">
+                أطياب<span>.</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html" class="active">لوحة التحكم</a></li>
+                <li><a href="customers.html">العملاء</a></li>
+                <li><a href="categories.html">الأقسام</a></li>
+                <li><a href="add_product.html">إضافة منتج</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2 style="margin-bottom: 2rem; color: var(--primary-color);">لوحة التحليل الذكية</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <h3>إجمالي التكاليف</h3>
+                <div class="value" id="total-cost">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">ج.م</div>
+            </div>
+            <div class="stat-box" style="background: linear-gradient(135deg, #1D3557, #457B9D);">
+                <h3>إجمالي المبيعات</h3>
+                <div class="value" id="total-sales">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">ج.م</div>
+            </div>
+            <div class="stat-box success">
+                <h3>صافي الأرباح</h3>
+                <div class="value" id="net-profit">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">ج.م</div>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <h2>المبيعات اليومية</h2>
+            <div class="chart-container" style="margin-bottom: 3rem;">
+                <canvas id="salesChart"></canvas>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-top: 1px solid #EEE; padding-top: 2rem;">
+                <h2>قائمة الطلبات</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="exportSales()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #2e7d32;">تصدير المبيعات (CSV)</button>
+                    <button onclick="exportInventory()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #1565c0;">تصدير المخزون (CSV)</button>
+                    <div class="search-box">
+                        <select id="payment-filter" style="padding: 0.8rem; border-radius: 30px; border: 1px solid #ddd; outline: none; font-family: Tajawal;">
+                            <option value="">جميع طرق الدفع</option>
+                            <option value="vodafone">فودافون كاش</option>
+                            <option value="instapay">إنستا باي</option>
+                            <option value="paypal">PayPal</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>العميل</th>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>الإجمالي</th>
+                            <th>طريقة الدفع</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <!-- Orders injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Transation Image Modal -->
+    <div class="modal" id="image-modal">
+        <div class="modal-content" style="text-align:center;">
+            <span class="close-modal" id="close-image-modal">&times;</span>
+            <img id="trans-image-display" src="" style="max-width: 100%; max-height: 70vh; border-radius: 8px; margin-top: 1rem;">
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let allOrders = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentUser = api.getCurrentUser();
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert('عذراً، يجب عليك تسجيل الدخول كمسؤول للوصول إلى هذه الصفحة');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Load Stats
+                const data = await api.getDashboardStats();
+                const stats = data.stats;
+                const dailyStats = data.dailyStats;
+
+                animateValue('total-cost', 0, stats.totalCost || 0, 1000);
+                animateValue('total-sales', 0, stats.totalSales || 0, 1000);
+                animateValue('net-profit', 0, stats.netProfit || 0, 1000);
+
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                const labels = dailyStats.map(d => d._id);
+                const salesData = dailyStats.map(d => d.sales);
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'المبيعات اليومية (ج.م)',
+                            data: salesData,
+                            borderColor: '#EF8354',
+                            backgroundColor: 'rgba(239, 131, 84, 0.2)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#2D3142',
+                            pointRadius: 5
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                // Load Orders
+                allOrders = await api.getOrders();
+                renderOrders(allOrders);
+
+                // Setup Filters
+                document.getElementById('payment-filter').addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    if(val) {
+                        renderOrders(allOrders.filter(o => o.payment_method === val));
+                    } else {
+                        renderOrders(allOrders);
+                    }
+                });
+
+            } catch (err) {
+                console.error('Failed to load dashboard data', err);
+            }
+
+            document.getElementById('close-image-modal').addEventListener('click', () => {
+                document.getElementById('image-modal').classList.remove('active');
+            });
+        });
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('orders-body');
+            tbody.innerHTML = '';
+            
+            if(orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد طلبات.</td></tr>';
+                return;
+            }
+
+            orders.forEach(o => {
+                const tr = document.createElement('tr');
+                
+                let paymentBadge = '';
+                if(o.payment_method === 'vodafone') paymentBadge = '<span style="background:#e60000; color:white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">فودافون كاش</span>';
+                else if(o.payment_method === 'instapay') paymentBadge = '<span style="background:#6a1b9a; color:white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">إنستا باي</span>';
+                else if(o.payment_method === 'paypal') paymentBadge = '<span style="background:#003087; color:white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">PayPal</span>';
+                else paymentBadge = o.payment_method;
+
+                let statusBadge = '';
+                if(o.payment_status === 'paid') statusBadge = '<span style="background:#4caf50; color:white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">تم الدفع</span>';
+                else statusBadge = '<span style="background:#ff9800; color:white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">قيد الانتظار</span>';
+
+                let actions = '';
+                if(o.transaction_image) {
+                    actions += `<button onclick="viewImage('${o.transaction_image}')" style="background:#2196f3; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-left:5px; font-family:Tajawal;">صورة الإيصال</button>`;
+                }
+                if(o.payment_status === 'pending') {
+                    actions += `<button onclick="approveOrder('${o._id}')" style="background:#4caf50; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-family:Tajawal;">تأكيد الدفع</button>`;
+                }
+                if(o.latitude && o.longitude) {
+                    actions += `<a href="https://www.google.com/maps?q=${o.latitude},${o.longitude}" target="_blank" style="background:#FF9800; color:white; text-decoration:none; display:inline-block; padding:4px 8px; border-radius:4px; font-size:0.8rem; margin-right:5px; font-family:Tajawal;">📍 عرض الخريطة</a>`;
+                }
+
+                tr.innerHTML = `
+                    <td>#${o._id.slice(-5)}</td>
+                    <td>${o.customer_name} <br> <small style="color:var(--text-muted)">${o.sender_phone || ''}</small></td>
+                    <td>${o.product_name}</td>
+                    <td>${o.quantity}</td>
+                    <td style="font-weight:bold; color:var(--gold-dark);">${o.total_price} ج.م</td>
+                    <td>${paymentBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actions || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.viewImage = function(imgSrc) {
+            document.getElementById('trans-image-display').src = imgSrc;
+            document.getElementById('image-modal').classList.add('active');
+        };
+
+        window.approveOrder = async function(orderId) {
+            if(confirm('هل أنت متأكد من تأكيد استلام المبلغ؟')) {
+                try {
+                    await api.approvePayment(orderId);
+                    alert('تم تأكيد الدفع بنجاح!');
+                    // reload Orders
+                    allOrders = await api.getOrders();
+                    
+                    // apply current filter if any
+                    const val = document.getElementById('payment-filter').value;
+                    if(val) renderOrders(allOrders.filter(o => o.payment_method === val));
+                    else renderOrders(allOrders);
+
+                } catch(err) {
+                    alert('حدث خطأ');
+                }
+            }
+        };
+
+        // --- EXPORT LOGIC ---
+        window.exportSales = function() {
+            if (allOrders.length === 0) {
+                alert('لا توجد مبيعات لتصديرها حالياً.');
+                return;
+            }
+
+            const headers = ['رقم الطلب', 'التاريخ', 'اسم العميل', 'المنتج', 'الكمية', 'الإجمالي', 'التكلفة', 'الربح', 'طريقة الدفع', 'الحالة'];
+            const rows = allOrders.map(o => [
+                o._id.slice(-5),
+                o.date.split('T')[0],
+                o.customer_name,
+                o.product_name,
+                o.quantity,
+                o.total_price,
+                o.total_cost,
+                o.profit,
+                o.payment_method,
+                o.payment_status === 'paid' ? 'تم الدفع' : 'قيد الانتظار'
+            ]);
+
+            downloadCSV(headers, rows, 'sales_report.csv');
+        };
+
+        window.exportInventory = async function() {
+            try {
+                const products = await api.getProducts();
+                if (products.length === 0) {
+                    alert('لا توجد منتجات في المخزون حالياً.');
+                    return;
+                }
+
+                const headers = ['كود المنتج', 'الاسم', 'القسم', 'سعر البيع', 'سعر التكلفة', 'الكمية المتبقية'];
+                const rows = products.map(p => [
+                    p._id,
+                    p.name,
+                    p.category,
+                    p.price,
+                    p.cost_price,
+                    p.quantity
+                ]);
+
+                downloadCSV(headers, rows, 'inventory_report.csv');
+            } catch (err) {
+                alert('فشل تصدير المخزون: ' + err.message);
+            }
+        };
+
+        function downloadCSV(headers, rows, filename) {
+            let csvContent = "\uFEFF"; // Byte Order Mark for Arabic UTF-8
+            csvContent += headers.join(',') + '\n';
+            
+            rows.forEach(row => {
+                const escapedRow = row.map(val => `"${val}"`).join(',');
+                csvContent += escapedRow + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            var range = end - start;
+            var current = start;
+            var increment = end > start ? 1 : -1;
+            var stepTime = Math.max(Math.abs(Math.floor(duration / range)), 10);
+            if(range > 1000) {
+                stepTime = 10;
+                increment = Math.floor(range / (duration / 10));
+            }
+            var obj = document.getElementById(id);
+            var timer = setInterval(function() {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                obj.innerHTML = current.toLocaleString();
+            }, stepTime);
+        }
+    </script>
+</body>
+</html>

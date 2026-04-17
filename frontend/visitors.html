@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إحصائيات الزوار - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .visitor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+        .visitor-table th, .visitor-table td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        .visitor-table th {
+            background: var(--primary-dark);
+            color: white;
+            font-family: 'Amiri', serif;
+        }
+        .visitor-table tr:hover {
+            background: #fbfbfb;
+        }
+        .stat-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: var(--gold-soft);
+            color: var(--gold-dark);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 40px; object-fit: contain;">
+                أطياب<span>.</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">لوحة التحكم</a></li>
+                <li><a href="visitors.html" class="active">الزوار</a></li>
+                <li><a href="customers.html">العملاء</a></li>
+                <li><a href="index.html">الموقع</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="font-family:'Amiri'; font-size: 2.5rem; color: var(--primary-dark);">سجل الزوار الأخير</h2>
+            <div id="total-v-count" style="font-size: 1.2rem; background: var(--gold-main); color:white; padding: 0.5rem 1.5rem; border-radius: 30px;">
+                جاري التحميل...
+            </div>
+        </div>
+
+        <div class="admin-card" style="padding:0;">
+            <table class="visitor-table">
+                <thead>
+                    <tr>
+                        <th>الوقت</th>
+                        <th>الصفحة</th>
+                        <th>IP Address</th>
+                        <th>المتصفح / الجهاز</th>
+                    </tr>
+                </thead>
+                <tbody id="visitor-log-body">
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 3rem;">جاري جلب بيانات الزوار...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = api.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                alert('عذراً، هذه الصفحة مخصصة للمدير فقط');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                // Get general stats for total count
+                const dashboardData = await api.getDashboardStats();
+                document.getElementById('total-v-count').innerText = `إجمالي الزيارات: ${dashboardData.stats.totalVisitors || 0}`;
+
+                // Get detailed log
+                const response = await fetch('/api/dashboard/visitors', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const visitors = await response.json();
+
+                const tbody = document.getElementById('visitor-log-body');
+                tbody.innerHTML = '';
+
+                if (visitors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد سجلات بعد</td></tr>';
+                    return;
+                }
+
+                visitors.forEach(v => {
+                    const date = new Date(v.visitedAt).toLocaleString('ar-EG');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${date}</td>
+                        <td><span class="stat-badge">${v.page}</span></td>
+                        <td style="font-family: monospace; color: var(--text-muted);">${v.ip}</td>
+                        <td style="font-size:0.8rem; color: #777;">${v.userAgent.substring(0, 50)}...</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error('Error fetching visitors:', err);
+            }
+        });
+    </script>
+</body>
+</html>

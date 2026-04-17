@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة منتج - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 40px; object-fit: contain;">
+                أطياب<span>.</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">لوحة التحكم</a></li>
+                <li><a href="customers.html">العملاء</a></li>
+                <li><a href="categories.html">الأقسام</a></li>
+                <li><a href="add_product.html" class="active">إضافة منتج</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 800px;">
+        <div class="admin-card">
+            <h2>إضافة منتج جديد</h2>
+            <form id="add-product-form">
+                <div class="form-group">
+                    <label>اسم المنتج</label>
+                    <input type="text" id="p-name" required>
+                </div>
+                <div class="form-group">
+                    <label>القسم</label>
+                    <select id="p-cat" required>
+                        <option value="" disabled selected>اختر القسم...</option>
+                        <!-- الأقسام سيتم تحميلها ديناميكياً -->
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label>سعر البيع (للجمهور)</label>
+                        <input type="number" id="p-price" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>سعر التكلفة (لحساب الربح)</label>
+                        <input type="number" id="p-cost" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>الكمية المتوفرة</label>
+                    <input type="number" id="p-qty" value="10" required>
+                </div>
+                <div class="form-group">
+                    <label>صورة المنتج</label>
+                    <input type="file" id="p-image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea id="p-desc" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="btn" style="width:100%; margin-top:1rem;">حفظ المنتج</button>
+            </form>
+            <div id="add-msg" style="margin-top:1rem; text-align:center; font-weight:bold;"></div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentUser = api.getCurrentUser();
+            if (!currentUser) {
+                alert('عذراً، يجب عليك تسجيل الدخول للوصول إلى هذه الصفحة');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // تحميل الأقسام ديناميكياً
+            try {
+                const categories = await api.getCategories();
+                const catSelect = document.getElementById('p-cat');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.name;
+                    option.textContent = cat.name;
+                    catSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error('فشل تحميل الأقسام:', err);
+            }
+        });
+        
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentUser = api.getCurrentUser();
+            if (!currentUser) {
+                alert('عذراً، يجب عليك تسجيل الدخول للوصول إلى هذه الصفحة');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const btn = e.target.querySelector('button');
+            const msg = document.getElementById('add-msg');
+            btn.disabled = true;
+            btn.textContent = 'جاري الإضافة...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('p-name').value);
+                formData.append('category', document.getElementById('p-cat').value);
+                formData.append('price', document.getElementById('p-price').value);
+                formData.append('cost_price', document.getElementById('p-cost').value);
+                formData.append('quantity', document.getElementById('p-qty').value);
+                formData.append('description', document.getElementById('p-desc').value);
+                
+                const imageFile = document.getElementById('p-image').files[0];
+                if (imageFile) formData.append('image', imageFile);
+
+                await api.addProduct(formData);
+                msg.style.color = 'green';
+                msg.textContent = 'تم إضافة المنتج بنجاح!';
+                e.target.reset();
+            } catch (err) {
+                msg.style.color = 'red';
+                msg.textContent = 'حدث خطأ: ' + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'حفظ المنتج';
+                setTimeout(() => msg.textContent = '', 3000);
+            }
+        });
+    </script>
+</body>
+</html>
