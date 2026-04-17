@@ -421,8 +421,8 @@ tr:hover {
 
 .cart-toggle {
     left: 30px; bottom: 30px;
-    background: var(--primary-dark);
-    color: var(--gold-light);
+    background: #FFFFFF;
+    color: var(--gold-dark);
     border: 2px solid var(--gold-main);
 }
 
@@ -467,12 +467,12 @@ tr:hover {
 
 .cart-drawer-header {
     padding: 1.5rem 2rem;
-    background: var(--primary-dark);
-    color: var(--gold-light);
+    background: var(--gold-main);
+    color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid var(--gold-main);
+    border-bottom: 2px solid var(--gold-dark);
 }
 
 #close-cart-drawer { font-size: 2.5rem; cursor: pointer; line-height: 1; }
