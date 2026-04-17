@@ -1,4 +1,4 @@
-const express = require('express');
+ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -31,8 +31,12 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Ensure uploads directory exists (local development)
 const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+    }
+} catch (err) {
+    console.log('Skipping local uploads directory creation in serverless environment.');
 }
 
 // API Routes
