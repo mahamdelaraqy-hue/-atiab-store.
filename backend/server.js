@@ -66,7 +66,18 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Global Error Handler for JSON responses
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'عذراً، حدث خطأ في الخادم: ' + err.message });
 });
+
+// Export the app for Vercel
+module.exports = app;
+
+const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
