@@ -191,6 +191,12 @@ const api = {
         return await api.request(`/admin/vendors/${id}/reject`, {
             method: 'PUT'
         });
+    },
+
+    promoteToAdmin: async (id) => {
+        return await api.request(`/admin/vendors/${id}/promote`, {
+            method: 'PUT'
+        });
     }
 };
 

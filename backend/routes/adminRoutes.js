@@ -55,4 +55,21 @@ router.put('/vendors/:id/reject', auth, adminOnly, async (req, res) => {
     }
 });
 
+// @route   PUT /api/admin/vendors/:id/promote
+// @desc    Promote a user to Admin
+router.put('/vendors/:id/promote', auth, adminOnly, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+
+        user.role = 'admin';
+        user.status = 'approved';
+        await user.save();
+        
+        res.json({ message: 'تمت ترقية المستخدم إلى مدير بنجاح', user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

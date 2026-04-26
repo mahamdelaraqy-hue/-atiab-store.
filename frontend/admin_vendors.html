@@ -137,6 +137,7 @@
                         statusClass = 'status-approved';
                         actionButtons = `
                             <button class="action-btn btn-reject" onclick="rejectVendor('${v._id}')">إلغاء الموافقة</button>
+                            <button class="action-btn btn-promote" style="background:#9c27b0;" onclick="promoteToAdmin('${v._id}')">ترقية لمدير</button>
                         `;
                     } else {
                         statusLabel = 'مرفوض';
@@ -180,6 +181,18 @@
                 try {
                     await api.rejectVendor(id);
                     alert('تم رفض البائع');
+                    loadVendors();
+                } catch (err) {
+                    alert('حدث خطأ: ' + err.message);
+                }
+            }
+        };
+
+        window.promoteToAdmin = async (id) => {
+            if (confirm('هل أنت متأكد من ترقية هذا البائع إلى مدير؟ سيحصل على كامل الصلاحيات لإدارة الموقع والبائعين الآخرين.')) {
+                try {
+                    await api.promoteToAdmin(id);
+                    alert('تمت ترقية العضو إلى مدير بنجاح!');
                     loadVendors();
                 } catch (err) {
                     alert('حدث خطأ: ' + err.message);
