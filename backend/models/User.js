@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'vendor'], default: 'vendor' },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     whatsapp: { type: String }, // WhatsApp number for contact
     created_at: { type: Date, default: Date.now }
 });

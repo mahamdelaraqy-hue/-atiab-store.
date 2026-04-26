@@ -21,7 +21,20 @@ router.post('/register', async (req, res) => {
         user = new User({ name, username, whatsapp, password });
         await user.save();
 
-        // Create token
+        // Create token only if not pending (like admin), but let's just make them wait if they are vendor.
+        if (user.role === 'vendor') {
+            return res.status(201).json({
+                message: 'تم تسجيل الحساب بنجاح. حسابك قيد المراجعة من قبل الإدارة.',
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    role: user.role,
+                    status: user.status
+                }
+            });
+        }
+
         const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
 
         res.status(201).json({
@@ -54,6 +67,16 @@ router.post('/login', async (req, res) => {
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(400).json({ error: 'بيانات الدخول غير صحيحة' });
+        }
+
+        // Check approval status
+        if (user.role === 'vendor') {
+            if (user.status === 'pending') {
+                return res.status(403).json({ error: 'حسابك قيد المراجعة من قبل الإدارة' });
+            }
+            if (user.status === 'rejected') {
+                return res.status(403).json({ error: 'تم رفض حسابك من قبل الإدارة' });
+            }
         }
 
         // Create token

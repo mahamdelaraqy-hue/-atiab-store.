@@ -40,13 +40,23 @@ try {
 }
 
 // API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/customers', require('./routes/customerRoutes'));
-app.use('/api/categories', require('./routes/categoryRoutes'));
-app.use('/api/chat', require('./routes/chatRoutes'));
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

@@ -174,6 +174,23 @@ const api = {
     // Customers
     getCustomers: async () => {
         return await api.request('/customers');
+    },
+
+    // Admin Vendor Management
+    getVendors: async () => {
+        return await api.request('/admin/vendors');
+    },
+
+    approveVendor: async (id) => {
+        return await api.request(`/admin/vendors/${id}/approve`, {
+            method: 'PUT'
+        });
+    },
+
+    rejectVendor: async (id) => {
+        return await api.request(`/admin/vendors/${id}/reject`, {
+            method: 'PUT'
+        });
     }
 };
 

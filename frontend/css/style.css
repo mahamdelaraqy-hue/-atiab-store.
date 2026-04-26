@@ -605,14 +605,41 @@ tr:hover {
 
 /* Responsiveness */
 @media (max-width: 768px) {
-    .nav-links { display: none; }
-    .hero h1 { font-size: 2.5rem; }
-    .controls-bar { flex-direction: column; align-items: stretch; }
+    /* Navbar improvements */
+    nav { flex-direction: column; gap: 1rem; padding: 1rem; }
+    .nav-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; padding: 0; }
+    .nav-links a { font-size: 0.9rem; padding: 5px 10px; background: #f8f9fa; border-radius: 20px; border: 1px solid #eee; }
+    
+    .hero h1 { font-size: 2.2rem; }
+    .hero p { font-size: 1rem; padding: 0 1rem; }
+    
+    /* Controls Bar */
+    .controls-bar { flex-direction: column; align-items: stretch; gap: 1.5rem; padding: 1rem; }
+    .filters { flex-wrap: wrap; justify-content: center; }
+    .filters button { padding: 0.5rem 1rem; font-size: 0.9rem; flex: 1 1 calc(50% - 0.5rem); text-align: center; }
     .search-box input { width: 100%; }
+    
+    /* Product Grid */
+    .product-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .product-image { height: 300px; }
+    
+    /* Modals & Forms */
     .payment-methods { grid-template-columns: 1fr; }
     .modal-content { padding: 1.5rem; width: 100%; top: auto; bottom: 0; max-height: 85vh; border-radius: 20px 20px 0 0; }
+    
+    /* Admin Dashboard & Tables */
+    .admin-card { padding: 1rem; }
+    th, td { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-box { padding: 1.5rem; }
+    .stat-box .value { font-size: 2.2rem; }
+    
+    /* Hide floating WhatsApp text if it gets too big */
+    .whatsapp-float { right: 15px; bottom: 15px; width: 55px; height: 55px; }
+    .cart-toggle { left: 15px; bottom: 15px; width: 55px; height: 55px; }
 }
 
 @media (max-width: 480px) {
     .cart-drawer { width: 100%; left: -100%; }
+    .nav-links a { flex: 1 1 45%; text-align: center; }
 }

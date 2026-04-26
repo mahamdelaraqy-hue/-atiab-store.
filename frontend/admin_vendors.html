@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة البائعين - أطياب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .vendor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+        .vendor-table th, .vendor-table td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        .vendor-table th {
+            background: var(--primary-dark);
+            color: white;
+            font-family: 'Amiri', serif;
+        }
+        .vendor-table tr:hover {
+            background: #fbfbfb;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        .status-pending { background: #ff9800; }
+        .status-approved { background: #4caf50; }
+        .status-rejected { background: #f44336; }
+        
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Tajawal;
+            font-size: 0.8rem;
+            color: white;
+            margin-left: 5px;
+        }
+        .btn-approve { background: #4caf50; }
+        .btn-reject { background: #f44336; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="أطياب" style="height: 40px; object-fit: contain;">
+                أطياب<span>.</span> - المدير
+            </a>
+            <ul class="nav-links">
+                <li><a href="admin_vendors.html" class="active">إدارة البائعين</a></li>
+                <li><a href="visitors.html">الزوار</a></li>
+                <li><a href="index.html">الموقع</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2 style="font-family:'Amiri'; font-size: 2.5rem; color: var(--primary-dark); margin-bottom: 2rem;">طلبات البائعين</h2>
+
+        <div class="admin-card" style="padding:0; overflow-x: auto;">
+            <table class="vendor-table">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>اسم المستخدم</th>
+                        <th>رقم الواتساب</th>
+                        <th>تاريخ التسجيل</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="vendor-log-body">
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 3rem;">جاري جلب بيانات البائعين...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = api.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                alert('عذراً، هذه الصفحة مخصصة للمدير فقط');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            loadVendors();
+        });
+
+        async function loadVendors() {
+            try {
+                const vendors = await api.getVendors();
+                const tbody = document.getElementById('vendor-log-body');
+                tbody.innerHTML = '';
+
+                if (vendors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا يوجد بائعين مسجلين بعد</td></tr>';
+                    return;
+                }
+
+                vendors.forEach(v => {
+                    const date = new Date(v.created_at).toLocaleDateString('ar-EG');
+                    const tr = document.createElement('tr');
+                    
+                    let statusLabel = '';
+                    let statusClass = '';
+                    let actionButtons = '';
+
+                    if (v.status === 'pending') {
+                        statusLabel = 'قيد الانتظار';
+                        statusClass = 'status-pending';
+                        actionButtons = `
+                            <button class="action-btn btn-approve" onclick="approveVendor('${v._id}')">الموافقة</button>
+                            <button class="action-btn btn-reject" onclick="rejectVendor('${v._id}')">رفض</button>
+                        `;
+                    } else if (v.status === 'approved') {
+                        statusLabel = 'تمت الموافقة';
+                        statusClass = 'status-approved';
+                        actionButtons = `
+                            <button class="action-btn btn-reject" onclick="rejectVendor('${v._id}')">إلغاء الموافقة</button>
+                        `;
+                    } else {
+                        statusLabel = 'مرفوض';
+                        statusClass = 'status-rejected';
+                        actionButtons = `
+                            <button class="action-btn btn-approve" onclick="approveVendor('${v._id}')">الموافقة</button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td>${v.name}</td>
+                        <td style="font-family: monospace; color: var(--text-muted);">${v.username}</td>
+                        <td dir="ltr" style="text-align: right;">${v.whatsapp || '-'}</td>
+                        <td>${date}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>${actionButtons}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error('Error fetching vendors:', err);
+                alert('حدث خطأ أثناء جلب بيانات البائعين. تأكد من صلاحياتك كمدير.');
+            }
+        }
+
+        window.approveVendor = async (id) => {
+            if (confirm('هل أنت متأكد من الموافقة على هذا البائع؟')) {
+                try {
+                    await api.approveVendor(id);
+                    alert('تمت الموافقة بنجاح');
+                    loadVendors();
+                } catch (err) {
+                    alert('حدث خطأ: ' + err.message);
+                }
+            }
+        };
+
+        window.rejectVendor = async (id) => {
+            if (confirm('هل أنت متأكد من رفض هذا البائع؟ يرجى العلم أنه لن يتمكن من الدخول للموقع.')) {
+                try {
+                    await api.rejectVendor(id);
+                    alert('تم رفض البائع');
+                    loadVendors();
+                } catch (err) {
+                    alert('حدث خطأ: ' + err.message);
+                }
+            }
+        };
+    </script>
+</body>
+</html>

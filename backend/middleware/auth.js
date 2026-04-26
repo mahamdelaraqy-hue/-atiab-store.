@@ -17,6 +17,15 @@ const auth = async (req, res, next) => {
             throw new Error();
         }
 
+        if (user.role === 'vendor') {
+            if (user.status === 'pending') {
+                return res.status(403).json({ error: 'حسابك قيد المراجعة من قبل الإدارة' });
+            }
+            if (user.status === 'rejected') {
+                return res.status(403).json({ error: 'تم رفض حسابك من قبل الإدارة' });
+            }
+        }
+
         req.token = token;
         req.user = user;
         next();

@@ -86,9 +86,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const user = api.getCurrentUser();
-            if (!user || user.role !== 'admin') {
-                alert('عذراً، هذه الصفحة مخصصة للمدير فقط');
-                window.location.href = 'index.html';
+            if (!user) {
+                alert('عذراً، يجب عليك تسجيل الدخول');
+                window.location.href = 'login.html';
                 return;
             }
 
